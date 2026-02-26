@@ -354,7 +354,7 @@
 </head>
 
 <body>
-    <div id="strike-banner" class="banner-strike hidden">🚨 STRIKE TEAM: HIGH PRIORITY PRECINCT ACTIVE</div>
+    <div id="strike-banner" class="banner-strike hidden">&#128680; STRIKE TEAM: HIGH PRIORITY PRECINCT ACTIVE</div>
 
     <header>
         <div class="flex-between">
@@ -389,19 +389,19 @@
                 <h2 style="font-weight:900; color: var(--gold); margin-bottom:1.5rem;">STRATEGY DASHBOARD</h2>
                 <div class="dashboard-grid">
                     <div class="dash-card" onclick="showV('view-main'); renderCities();">
-                        <span style="font-size:1.5rem;">🗺️</span>
+                        <span style="font-size:1.5rem;">&#128506;&#65039;</span>
                         <h3>City Routes</h3>
                     </div>
                     <div class="dash-card" onclick="renderPowerRoutes()">
-                        <span style="font-size:1.5rem;">🎯</span>
+                        <span style="font-size:1.5rem;">&#127919;</span>
                         <h3>Power Routes</h3>
                     </div>
                     <div class="dash-card" onclick="window.open('maps/District_Maps.pdf')">
-                        <span style="font-size:1.5rem;">📄</span>
+                        <span style="font-size:1.5rem;">&#128196;</span>
                         <h3>District Maps</h3>
                     </div>
                     <div class="dash-card" onclick="window.open('voter_data.html')">
-                        <span style="font-size:1.5rem;">📊</span>
+                        <span style="font-size:1.5rem;">&#128202;</span>
                         <h3>Voter Data (CSV)</h3>
                     </div>
                 </div>
@@ -410,7 +410,7 @@
 
                 <button class="btn-gold"
                     style="margin-top:1rem; border-radius: 1rem; background: #1e293b; border: 1px solid #334155; color:var(--text);"
-                    onclick="openSearch()">🔍 SEARCH VOTER OR STREET</button>
+                    onclick="openSearch()">&#128269; SEARCH VOTER OR STREET</button>
             </div>
         </div>
 
@@ -447,16 +447,16 @@
                             <div class="label" style="color:var(--gold);">2. SENTIMENT</div>
                             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
                                 <div class="check-toggle" onclick="toggleCheck('supporter')">Supporter <div
-                                        class="check-box" id="chk-supporter">✓</div>
+                                        class="check-box" id="chk-supporter">&#10003;</div>
                                 </div>
                                 <div class="check-toggle" onclick="toggleCheck('undecided')">Undecided <div
-                                        class="check-box" id="chk-undecided">✓</div>
+                                        class="check-box" id="chk-undecided">&#10003;</div>
                                 </div>
                                 <div class="check-toggle" onclick="toggleCheck('leaning')">Leaning <div
-                                        class="check-box" id="chk-leaning">✓</div>
+                                        class="check-box" id="chk-leaning">&#10003;</div>
                                 </div>
                                 <div class="check-toggle danger" onclick="toggleCheck('scram')">SCRAM <div
-                                        class="check-box" id="chk-scram">✓</div>
+                                        class="check-box" id="chk-scram">&#10003;</div>
                                 </div>
                             </div>
                             <textarea id="f-notes" class="search-input" placeholder="NOTES"
@@ -471,9 +471,9 @@
 
         <div id="view-power" class="hidden">
             <button onclick="goHome()"
-                style="background:none; border:none; color:var(--gold); margin-bottom:1.5rem; cursor:pointer; font-weight:900;">←
+                style="background:none; border:none; color:var(--gold); margin-bottom:1.5rem; cursor:pointer; font-weight:900;">&#8592;
                 BACK</button>
-            <div class="label" style="color:var(--red);">🎯 HIGH-PRIORITY TARGETS</div>
+            <div class="label" style="color:var(--red);">&#127919; HIGH-PRIORITY TARGETS</div>
             <div id="power-list"></div>
         </div>
     </div>
@@ -483,7 +483,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <h2 style="font-weight:900; color:var(--gold);">GLOBAL SEARCH</h2>
             <button onclick="closeSearch()"
-                style="background:none; border:none; color:white; font-weight:900; font-size:1.2rem;">✕</button>
+                style="background:none; border:none; color:white; font-weight:900; font-size:1.2rem;">&#10006;</button>
         </div>
         <input type="text" id="global-search-input" class="search-input" placeholder="Name, Street, or Precinct..."
             onkeyup="handleGlobalSearch(this.value)">
@@ -496,8 +496,8 @@
 
     <script>
         // --- SYNC CONFIG & LOCAL TESTING ---
-        let SYNC_URL = 'https://script.google.com/macros/s/AKfycby-2Nt4CxNoNyAysZlZvko4VrqDyGaW7L34PLd20gyK-hftXhhJKBTQTr1KsN6949A7kQ/exec';
-        const isLocal = false;
+        let SYNC_URL = 'https://script.google.com/macros/s/AKfycbxoA5M-s1zxXSSpD45diFCZurjDMlSpY_2rEo_IwksUTkf7ZUN6uFnMfARIPdZZCz7C/exec';
+        const isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost';
 
         if (isLocal) {
             document.getElementById('dev-tag').classList.remove('hidden');
