@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Campaign Command: Field Ops</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --accent: #ca8a04;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --gold: #f59e0b;
+            --pink: #db2777;
+            --red: #ef4444;
+            --green: #22c55e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            padding-bottom: 5rem;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1.2rem;
+        }
+
+        header {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 1rem 1.2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid #334155;
+        }
+
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-pill {
+            font-size: 0.6rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-weight: 800;
+            border: 1px solid #334155;
+            text-transform: uppercase;
+        }
+
+        .status-ready {
+            background: rgba(22, 163, 74, 0.1);
+            color: #4ade80;
+            border-color: rgba(74, 222, 128, 0.2);
+        }
+
+        .simple-card {
+            background: var(--card);
+            border-radius: 1.2rem;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            margin-bottom: 1rem;
+        }
+
+        .btn-gold {
+            width: 100%;
+            padding: 1.2rem;
+            border-radius: 0.8rem;
+            background: var(--gold);
+            color: white;
+            font-weight: 900;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        .btn-home {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: var(--gold);
+            padding: 0.5rem 0.8rem;
+            border-radius: 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 900;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 1.4rem;
+            border-radius: 2rem;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .list-item {
+            background: var(--card);
+            padding: 1.2rem;
+            border-radius: 1rem;
+            margin-bottom: 0.8rem;
+            border: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.1s;
+        }
+
+        .list-item:active {
+            transform: scale(0.98);
+        }
+
+        .priority-indicator {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+            border-radius: 6px 0 0 6px;
+        }
+
+        .label {
+            font-size: 0.75rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            font-weight: 800;
+            margin-bottom: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .big-house-num {
+            font-size: 2.8rem;
+            font-weight: 950;
+            line-height: 1;
+            letter-spacing: -1px;
+            color: var(--gold);
+        }
+
+        .bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #1e293b;
+            border-radius: 10px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        #bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--gold);
+            transition: width 0.3s;
+        }
+
+        #diagnostics {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            font-size: 0.6rem;
+            color: var(--muted);
+            text-align: center;
+            padding: 5px;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .outcome-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .outcome-btn,
+        .check-toggle {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: white;
+            padding: 0.8rem 1rem;
+            border-radius: 0.8rem;
+            font-weight: 800;
+            font-size: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .outcome-btn.active {
+            background: var(--gold);
+            border-color: var(--gold);
+        }
+
+        .check-toggle.active {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .check-toggle.active.danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        .check-box {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #334155;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: transparent;
+        }
+
+        .check-toggle.active .check-box {
+            color: white;
+            background: var(--green);
+            border-color: var(--green);
+        }
+
+        .check-toggle.active.danger .check-box {
+            background: var(--red);
+            border-color: var(--red);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .dash-card {
+            background: var(--card);
+            border: 1px solid #334155;
+            padding: 1.5rem;
+            border-radius: 1.2rem;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .banner-strike {
+            background: var(--red);
+            color: white;
+            padding: 0.6rem;
+            text-align: center;
+            font-weight: 900;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            animation: pulse 2s infinite;
+            z-index: 1001;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .prog-circle {
+            font-size: 0.7rem;
+            font-weight: 900;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 6px;
+            color: var(--gold);
+        }
+
+        .strike-pill {
+            background: var(--red);
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: 900;
+            margin-left: 5px;
+        }
+
+        #search-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg);
+            z-index: 2000;
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dev-badge {
+            background: var(--pink);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            font-weight: 900;
+            margin-right: 5px;
+        }
+    </style>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('SW registered'))
+                .catch(err => console.log('SW error:', err));
+            });
+        }
+    </script>
+</head>
+
+
+<body>
+    <div id="strike-banner" class="banner-strike hidden">🚨 STRIKE TEAM: HIGH PRIORITY PRECINCT ACTIVE</div>
+
+    <header>
+        <div class="flex-between">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <button class="btn-home hidden" id="header-home" onclick="goHome()">HOME</button>
+                <div id="dev-tag" class="dev-badge hidden">LOCAL TEST</div>
+                <h1 style="font-size: 1rem; font-weight: 950; color: var(--gold); letter-spacing:1px;">CAMPAIGN HUB</h1>
+            </div>
+            <div id="status-pill" class="status-pill status-ready">HUB READY</div>
+        </div>
+    </header>
+
+    <div class="container" id="app-content">
+        <!-- Identity Screen -->
+        <div id="view-identity">
+            <div class="simple-card" style="margin-top: 8vh; text-align: center;">
+                <h2 style="font-weight:900; margin-bottom:0.5rem;">Voter Outreach</h2>
+                <input type="text" id="volunteer-input" class="search-input" style="text-align:center;"
+                    placeholder="YOUR FULL NAME">
+                <button class="btn-gold" style="margin-top:1.5rem;" onclick="saveIdentity()">START CANVASSING</button>
+                <div id="data-progress-box" class="hidden">
+                    <div class="bar-bg">
+                        <div id="bar-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Workspace -->
+        <div id="view-dashboard" class="hidden">
+            <div class="simple-card" style="text-align:center;">
+                <h2 style="font-weight:900; color: var(--gold); margin-bottom:1.5rem;">STRATEGY DASHBOARD</h2>
+                <div class="dashboard-grid">
+                    <div class="dash-card" onclick="showV('view-main'); renderCities();">
+                        <span style="font-size:1.5rem;">🗺️</span>
+                        <h3>City Routes</h3>
+                    </div>
+                    <div class="dash-card" onclick="renderPowerRoutes()">
+                        <span style="font-size:1.5rem;">🎯</span>
+                        <h3>Power Routes</h3>
+                    </div>
+                    <div class="dash-card" onclick="window.open('maps/District_Maps.pdf')">
+                        <span style="font-size:1.5rem;">📄</span>
+                        <h3>District Maps</h3>
+                    </div>
+                    <div class="dash-card" onclick="window.open('data/Coffee_County_Voters_Master.csv')">
+                        <span style="font-size:1.5rem;">📊</span>
+                        <h3>Voter Data (CSV)</h3>
+                    </div>
+                </div>
+
+                <div id="priority-alerts" style="text-align:left; margin-top: 1rem;"></div>
+
+                <button class="btn-gold"
+                    style="margin-top:1rem; border-radius: 1rem; background: #1e293b; border: 1px solid #334155; color:var(--text);"
+                    onclick="openSearch()">🔍 SEARCH VOTER OR STREET</button>
+            </div>
+        </div>
+
+        <!-- Main Workspace (Drilldown) -->
+        <div id="view-main" class="hidden">
+            <div id="panel-nav">
+                <div id="city-list"></div>
+                <div id="district-list" class="hidden"></div>
+                <div id="street-list" class="hidden"></div>
+            </div>
+            <div id="panel-houses" class="hidden">
+                <div id="house-list"></div>
+            </div>
+            <div id="panel-form" class="hidden">
+                <button onclick="closeForm()"
+                    style="background:none; border:none; color:var(--gold); margin-bottom:1.5rem; cursor:pointer; font-weight:900; font-size:1.1rem;">←
+                    BACK TO LIST</button>
+                <div class="simple-card">
+                    <div style="text-align:center;">
+                        <div class="label" id="f-street-label">---</div>
+                        <div id="f-house-num" class="big-house-num" style="color:var(--text);">---</div>
+                        <div id="f-voter-info"
+                            style="margin: 1rem 0; padding: 1rem; border-radius: 1rem; background: rgba(0,0,0,0.2);">
+                        </div>
+                        <div id="f-questionnaire" style="text-align:left;">
+                            <div class="label" style="color:var(--gold);">1. OUTCOME</div>
+                            <div class="outcome-grid">
+                                <button class="outcome-btn" onclick="setOutcome('TALKED')">TALKED</button>
+                                <button class="outcome-btn" onclick="setOutcome('NOT HOME')">NOT HOME</button>
+                                <button class="outcome-btn" onclick="setOutcome('MOVED')">MOVED</button>
+                                <button class="outcome-btn" onclick="setOutcome('REFUSED')">REFUSED</button>
+                            </div>
+                            <div class="label" style="color:var(--gold);">2. SENTIMENT</div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                                <div class="check-toggle" onclick="toggleCheck('supporter')">Supporter <div
+                                        class="check-box" id="chk-supporter">✓</div>
+                                </div>
+                                <div class="check-toggle" onclick="toggleCheck('undecided')">Undecided <div
+                                        class="check-box" id="chk-undecided">✓</div>
+                                </div>
+                                <div class="check-toggle danger" onclick="toggleCheck('scram')">SCRAM <div
+                                        class="check-box" id="chk-scram">✓</div>
+                                </div>
+                            </div>
+                            <textarea id="f-notes" class="search-input" placeholder="NOTES"
+                                style="margin-top:1.5rem; height:80px;"></textarea>
+                            <button id="save-btn" class="btn-gold" style="margin-top:1.5rem;"
+                                onclick="saveCanvass()">SAVE RESULTS</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-power" class="hidden">
+            <button onclick="goHome()"
+                style="background:none; border:none; color:var(--gold); margin-bottom:1.5rem; cursor:pointer; font-weight:900;">←
+                BACK</button>
+            <div class="label" style="color:var(--red);">🎯 HIGH-PRIORITY TARGETS</div>
+            <div id="power-list"></div>
+        </div>
+    </div>
+
+    <!-- Search Overlay -->
+    <div id="search-overlay" class="hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h2 style="font-weight:900; color:var(--gold);">GLOBAL SEARCH</h2>
+            <button onclick="closeSearch()"
+                style="background:none; border:none; color:white; font-weight:900; font-size:1.2rem;">✕</button>
+        </div>
+        <input type="text" id="global-search-input" class="search-input" placeholder="Name, Street, or Precinct..."
+            onkeyup="handleGlobalSearch(this.value)">
+        <div id="search-results" style="margin-top:1.5rem; overflow-y:auto; flex-grow:1;"></div>
+    </div>
+
+    <div id="diagnostics">
+        <span>VOTERS: <b id="diag-voters" style="color:var(--gold);">...</b></span>
+    </div>
+
+    <script>
+        // --- SYNC CONFIG & LOCAL TESTING ---
+        let SYNC_URL = '<?= scriptUrl ?>';
+        const isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || SYNC_URL.startsWith('<?');
+
+        if (isLocal) {
+            document.getElementById('dev-tag').classList.remove('hidden');
+            const storedUrl = localStorage.getItem('v6_sync_url');
+            if (storedUrl) SYNC_URL = storedUrl;
+            else {
+                SYNC_URL = prompt("🛠️ DEV MODE: Please enter your Google Script 'Exec' URL to test locally with live data:");
+                if (SYNC_URL) localStorage.setItem('v6_sync_url', SYNC_URL);
+            }
+        }
+
+        let voterData = null; let globalStreetIndex = []; let globalVoterIndex = [];
+        let volunteerName = localStorage.getItem('v6_user') || '';
+        let cloudResults = {}; let activePriorities = [];
+        let currentCity = ''; let currentDist = ''; let currentHVs = null; let currentStreet = '';
+        let lastPerspective = 'view-dashboard';
+        let selectedOutcome = null; let checks = { supporter: false, undecided: false, scram: false };
+
+        window.addEventListener('load', () => {
+            if (volunteerName) {
+                document.getElementById('volunteer-input').value = volunteerName;
+                document.getElementById('data-progress-box').classList.remove('hidden');
+            }
+            loadData();
+        });
+
+        async function loadData() {
+            if (!SYNC_URL || SYNC_URL.startsWith('<?')) {
+                document.getElementById('status-pill').innerText = "CONFIG REQ.";
+                return;
+            }
+            document.getElementById('status-pill').innerText = "SYNCING...";
+            try {
+                const [r1, r2, r3] = await Promise.all([
+                    fetch(SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'action=get_voters'),
+                    fetch(SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'action=fetch'),
+                    fetch(SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'action=get_priorities')
+                ]);
+                voterData = await r1.json();
+                const resultsArr = await r2.json();
+                resultsArr.forEach(r => cloudResults[r.Address] = r.status);
+                const pData = await r3.json();
+                activePriorities = (pData.active || []).filter(x => x.trim() !== "");
+
+                voterCount = 0; globalStreetIndex = []; globalVoterIndex = [];
+                Object.keys(voterData).forEach(city => {
+                    Object.keys(voterData[city] || {}).forEach(dist => {
+                        Object.keys(voterData[city][dist] || {}).forEach(street => {
+                            if (Array.isArray(voterData[city][dist][street])) {
+                                voterCount += voterData[city][dist][street].length;
+                                globalStreetIndex.push({ s: street, c: city, d: dist });
+                                voterData[city][dist][street].forEach(v => {
+                                    // Index for searching: First Last, Last, and Street Address
+                                    const fullName = ((v.fn || '') + ' ' + (v.ln || '')).trim();
+                                    globalVoterIndex.push({
+                                        name: fullName,
+                                        street: street,
+                                        city: city,
+                                        dist: dist,
+                                        house: v.house || v.h,
+                                        rawV: v
+                                    });
+                                });
+                            }
+                        });
+                    });
+                });
+                document.getElementById('diag-voters').innerText = voterCount;
+                document.getElementById('status-pill').innerText = "HUB READY";
+                if (volunteerName) showV('view-dashboard');
+                renderHomeAlerts();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('status-pill').innerText = "OFFLINE";
+            }
+        }
+
+        function renderHomeAlerts() {
+            const container = document.getElementById('priority-alerts');
+            container.innerHTML = '';
+            if (activePriorities.length > 0) {
+                container.innerHTML = '<div class="label" style="color:var(--red);">🚨 ACTIVE STRIKE SECTORS</div>';
+                activePriorities.forEach(p => {
+                    const el = document.createElement('div'); el.className = 'list-item';
+                    el.style.borderColor = 'var(--red)';
+                    el.innerHTML = `<span>Precinct ${p}</span> <span class="strike-pill">GO NOW</span>`;
+                    el.onclick = () => {
+                        let foundCity = '';
+                        Object.keys(voterData).some(city => {
+                            if (voterData[city][p]) { foundCity = city; return true; }
+                            return false;
+                        });
+                        if (foundCity) renderStreets(foundCity, p);
+                    };
+                    container.appendChild(el);
+                });
+            }
+        }
+
+        function saveIdentity() {
+            const val = document.getElementById('volunteer-input').value.trim();
+            if (!val) return; volunteerName = val; localStorage.setItem('v6_user', val);
+            showV('view-dashboard');
+        }
+
+        function showV(id) {
+            document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            if (id !== 'view-identity' && id !== 'view-power' && id !== 'view-main' && id !== 'view-dashboard') {
+                lastPerspective = id;
+            } else if (id === 'view-dashboard' || id === 'view-power') {
+                lastPerspective = id;
+            }
+            document.getElementById('header-home').classList.toggle('hidden', id === 'view-dashboard' || id === 'view-identity');
+        }
+
+        function goHome() {
+            showV('view-dashboard'); document.getElementById('strike-banner').classList.add('hidden');
+            document.getElementById('panel-nav').classList.remove('hidden');
+            document.getElementById('panel-houses').classList.add('hidden');
+            document.getElementById('panel-form').classList.add('hidden');
+            document.getElementById('city-list').classList.remove('hidden');
+            document.getElementById('district-list').classList.add('hidden');
+            document.getElementById('street-list').classList.add('hidden');
+        }
+
+        function renderCities() {
+            showV('view-main');
+            const c = document.getElementById('city-list'); c.classList.remove('hidden');
+            c.innerHTML = '<div class="label" style="text-align:center;">PRECINCT CITIES</div>';
+            Object.keys(voterData).sort().forEach(city => {
+                const i = document.createElement('div'); i.className = 'list-item';
+                i.innerHTML = `<span>${city.toUpperCase()}</span> <span>→</span>`;
+                i.onclick = () => renderDists(city);
+                c.appendChild(i);
+            });
+        }
+
+        function renderDists(city) {
+            const c = document.getElementById('district-list'); c.classList.remove('hidden');
+            document.getElementById('city-list').classList.add('hidden');
+            c.innerHTML = `<button class="btn-home" onclick="renderCities()">← BACK</button><div class="label">DISTRICTS</div>`;
+            Object.keys(voterData[city]).sort((a, b) => (parseInt(a) || 0) - (parseInt(b) || 0)).forEach(d => {
+                let total = 0; let done = 0;
+                Object.keys(voterData[city][d] || {}).forEach(s => {
+                    voterData[city][d][s].forEach(v => { total++; if (cloudResults[(v.house || v.h) + ' ' + s]) done++; });
+                });
+                const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+                const isPriority = activePriorities.includes(d);
+                const i = document.createElement('div'); i.className = 'list-item';
+                i.innerHTML = `<div><span>Precinct ${d}</span> ${isPriority ? '<span class="strike-pill">PRIORITY</span>' : ' '}</div> <span class="prog-circle">${pct}%</span> `;
+                i.onclick = () => renderStreets(city, d);
+                c.appendChild(i);
+            });
+        }
+
+        function renderStreets(city, dist) {
+            showV('view-main');
+            currentCity = city; currentDist = dist;
+            document.getElementById('strike-banner').classList.toggle('hidden', !activePriorities.includes(dist));
+            const c = document.getElementById('street-list'); c.classList.remove('hidden');
+            document.getElementById('district-list').classList.add('hidden');
+            document.getElementById('city-list').classList.add('hidden');
+            c.innerHTML = `<button class="btn-home" onclick="renderDists('${city}')">← BACK</button><div class="label">STREETS in Prec. ${dist}</div>`;
+            Object.keys(voterData[city][dist] || {}).sort().forEach(s => {
+                const i = document.createElement('div'); i.className = 'list-item';
+                i.innerHTML = `<span>${s.toUpperCase()}</span> <span>→</span>`;
+                i.onclick = () => renderHouses(city, dist, s);
+                c.appendChild(i);
+            });
+        }
+
+        function renderHouses(city, dist, street) {
+            showV('view-main');
+            const c = document.getElementById('house-list');
+            document.getElementById('panel-nav').classList.add('hidden');
+            document.getElementById('panel-houses').classList.remove('hidden');
+            c.innerHTML = `<button class="btn-home" onclick="renderStreets('${city}','${dist}')">← BACK</button>`;
+            const vs = voterData[city][dist][street];
+            const hs = {}; vs.forEach(v => {
+                const hNum = v.house || v.h;
+                if (!hs[hNum]) hs[hNum] = []; hs[hNum].push(v);
+            });
+            Object.keys(hs).sort((a, b) => (parseInt(a) || 0) - (parseInt(b) || 0)).forEach(h => {
+                const status = cloudResults[h + ' ' + street];
+                const i = document.createElement('div'); i.className = 'list-item';
+                const firstV = hs[h][0];
+                const pColor = firstV.Priority === 'Pink' ? 'var(--pink)' : (firstV.Priority === 'Red' ? 'var(--red)' : 'var(--gold)');
+                i.innerHTML = `<div class="priority-indicator" style="background:${pColor};"></div>
+                    <div style="padding-left:14px;">
+                        <span style="font-size:2rem; font-weight:950;">${h}</span>
+                        <div style="font-weight:900; color:var(--gold);">${firstV.ln || 'VOTER'}</div>
+                        <div style="font-size:0.6rem; color:var(--muted);">${status || 'UNVISITED'}</div>
+                    </div>`;
+                i.onclick = () => openForm(hs[h], city, dist, street);
+                c.appendChild(i);
+            });
+        }
+
+        function renderPowerRoutes() {
+            showV('view-power');
+            const list = document.getElementById('power-list'); list.innerHTML = '';
+            let count = 0;
+            globalStreetIndex.forEach(idx => {
+                const vs = voterData[idx.c][idx.d][idx.s];
+                const priorityVs = vs.filter(v => v.Priority === 'Pink' || v.Priority === 'Red');
+                if (priorityVs.length > 0) {
+                    const hs = {}; priorityVs.forEach(v => {
+                        const hNum = v.house || v.h;
+                        if (!hs[hNum]) hs[hNum] = []; hs[hNum].push(v);
+                    });
+                    Object.keys(hs).forEach(h => {
+                        count++;
+                        const i = document.createElement('div'); i.className = 'list-item';
+                        const firstV = hs[h][0];
+                        const pColor = firstV.Priority === 'Red' ? 'var(--red)' : 'var(--pink)';
+                        i.innerHTML = `<div class="priority-indicator" style="background:${pColor};"></div>
+                            <div>
+                                <div style="font-weight:900;">${h} ${idx.s}</div>
+                                <div style="font-size:0.6rem;">${firstV.ln} | Prec. ${idx.d}</div>
+                            </div>`;
+                        i.onclick = () => { lastPerspective = 'view-power'; openForm(hs[h], idx.c, idx.d, idx.s); };
+                        list.appendChild(i);
+                    });
+                }
+            });
+            if (count === 0) list.innerHTML = '<p style="text-align:center; padding:2rem; color:var(--muted);">No priority targets found.</p>';
+        }
+
+        function openSearch() { document.getElementById('search-overlay').classList.remove('hidden'); document.getElementById('global-search-input').focus(); }
+        function closeSearch() { document.getElementById('search-overlay').classList.add('hidden'); }
+
+        function handleGlobalSearch(val) {
+            const q = val.trim().toLowerCase(); const res = document.getElementById('search-results');
+            res.innerHTML = '';
+            if (!q) return;
+
+            // 1. Search Streets & Precincts
+            const sMatches = globalStreetIndex.filter(i => i.s.toLowerCase().includes(q) || i.d.toString().includes(q)).slice(0, 5);
+            if (sMatches.length > 0) {
+                res.innerHTML += '<div class="label" style="text-align:center;">STREETS & PRECINCTS</div>';
+                sMatches.forEach(m => {
+                    const el = document.createElement('div'); el.className = 'list-item';
+                    el.innerHTML = `<div><div style="font-weight:900;">${m.s.toUpperCase()}</div><div style="font-size:0.6rem;">${m.c} | Prec. ${m.d}</div></div>`;
+                    el.onclick = () => { closeSearch(); renderHouses(m.c, m.d, m.s); };
+                    res.appendChild(el);
+                });
+            }
+
+            // 2. Search Voters
+            const vMatches = globalVoterIndex.filter(i => i.name.toLowerCase().includes(q)).slice(0, 40);
+            if (vMatches.length > 0) {
+                res.innerHTML += '<div class="label" style="text-align:center; margin-top:1.5rem;">VOTERS</div>';
+                vMatches.forEach(m => {
+                    const el = document.createElement('div'); el.className = 'list-item';
+                    const hNum = m.house;
+                    el.innerHTML = `<div><div style="font-weight:900;">${m.name.toUpperCase()}</div><div style="font-size:0.6rem;">${hNum} ${m.street} | Prec. ${m.dist}</div></div>`;
+                    el.onclick = () => {
+                        closeSearch();
+                        // Find all voters in this house
+                        const allVsAtHouse = voterData[m.city][m.dist][m.street].filter(v => (v.house || v.h) === hNum);
+                        openForm(allVsAtHouse, m.city, m.dist, m.street);
+                    };
+                    res.appendChild(el);
+                });
+            }
+
+            if (sMatches.length === 0 && vMatches.length === 0) {
+                res.innerHTML = '<p style="text-align:center; padding:2rem; color:var(--muted);">No results found.</p>';
+            }
+        }
+
+        function openForm(hVs, city, dist, street) {
+            currentHVs = hVs; currentCity = city; currentDist = dist; currentStreet = street;
+            document.querySelectorAll('.outcome-btn, .check-toggle').forEach(b => b.classList.remove('active'));
+            selectedOutcome = null; Object.keys(checks).forEach(k => checks[k] = false);
+            showV('view-main');
+            document.getElementById('panel-houses').classList.add('hidden');
+            document.getElementById('panel-form').classList.remove('hidden');
+            document.getElementById('f-street-label').innerText = street.toUpperCase();
+            document.getElementById('f-house-num').innerText = (hVs[0].house || hVs[0].h) || '---';
+            document.getElementById('f-voter-info').innerHTML = hVs.map(v => `<div style="font-weight:900; font-size:1.6rem; color:var(--gold); border-bottom:1px solid rgba(255,255,255,0.05); padding:5px 0;">${v.ln || 'VOTER'}</div>`).join('');
+            document.getElementById('f-notes').value = '';
+        }
+
+        function setOutcome(val) { selectedOutcome = val; document.querySelectorAll('.outcome-btn').forEach(b => b.classList.toggle('active', b.innerText === val)); }
+        function toggleCheck(key) { checks[key] = !checks[key]; document.getElementById('chk-' + key).parentElement.classList.toggle('active', checks[key]); }
+
+        async function saveCanvass() {
+            if (!selectedOutcome) return alert("Outcome Required."); const btn = document.getElementById('save-btn'); btn.innerText = "SAVING...";
+            let p = [`OUT: ${selectedOutcome}`];
+            if (checks.supporter) p.push("ID: SUPP"); if (checks.scram) p.push("ID: SCRAM");
+            const hNum = (currentHVs[0].house || currentHVs[0].h);
+            const payload = { volunteerId: volunteerName, results: [{ city: currentCity, district: currentDist, address: `${hNum} ${currentStreet}`, status: p.join(' | '), notes: document.getElementById('f-notes').value.trim() }] };
+            await fetch(SYNC_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            cloudResults[`${hNum} ${currentStreet}`] = p.join(' | ');
+            closeForm();
+        }
+
+        function closeForm() {
+            if (lastPerspective === 'view-power') renderPowerRoutes();
+            else { showV('view-main'); document.getElementById('panel-houses').classList.remove('hidden'); document.getElementById('panel-form').classList.add('hidden'); }
+            document.getElementById('save-btn').innerText = "SAVE RESULTS";
+        }
+    </script>
+</body>
+
+</html>
