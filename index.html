@@ -91,6 +91,32 @@
             cursor: pointer;
         }
 
+        #marquee-box {
+            background: #064e3b;
+            color: white;
+            padding: 8px;
+            font-weight: 900;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--gold);
+            overflow: hidden;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 1001;
+        }
+
+        .marquee {
+            display: inline-block;
+            padding-left: 100%;
+            animation: scroll-text 15s linear infinite;
+        }
+
+        @keyframes scroll-text {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+
         .btn-home {
             background: #1e293b;
             border: 1px solid #334155;
@@ -354,6 +380,9 @@
 </head>
 
 <body>
+    <div id="marquee-box" class="hidden">
+        <div id="marquee-text" class="marquee">COMMAND BROADCAST: STANDING BY...</div>
+    </div>
     <div id="strike-banner" class="banner-strike hidden">&#128680; STRIKE TEAM: HIGH PRIORITY PRECINCT ACTIVE</div>
 
     <header>
@@ -554,6 +583,13 @@
 
                 const pData = await responses[1].json();
                 activePriorities = (pData.active || []).filter(x => x.trim() !== "");
+
+                if (pData.broadcast) {
+                    document.getElementById('marquee-box').classList.remove('hidden');
+                    document.getElementById('marquee-text').innerText = "COMMAND BROADCAST: " + pData.broadcast;
+                } else {
+                    document.getElementById('marquee-box').classList.add('hidden');
+                }
 
                 if (staticVoters) {
                     voterData = staticVoters;
