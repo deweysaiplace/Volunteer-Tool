@@ -531,16 +531,35 @@
             }
             document.getElementById('status-pill').innerText = "SYNCING...";
             try {
-                const [r1, r2, r3] = await Promise.all([
-                    fetch(SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'action=get_voters'),
+                // Try to load static voter data first (faster/more reliable on GitHub)
+                let staticVoters = null;
+                try {
+                    const staticRes = await fetch('voter_data.json');
+                    if (staticRes.ok) staticVoters = await staticRes.json();
+                } catch (e) { console.warn("Static data load skipped"); }
+
+                const fetchPromises = [
                     fetch(SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'action=fetch'),
                     fetch(SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'action=get_priorities')
-                ]);
-                voterData = await r1.json();
-                const resultsArr = await r2.json();
+                ];
+
+                // Only fetch voters from Google if static load failed
+                if (!staticVoters) {
+                    fetchPromises.push(fetch(SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'action=get_voters'));
+                }
+
+                const responses = await Promise.all(fetchPromises);
+                const resultsArr = await responses[0].json();
                 resultsArr.forEach(r => cloudResults[r.Address] = r.status);
-                const pData = await r3.json();
+
+                const pData = await responses[1].json();
                 activePriorities = (pData.active || []).filter(x => x.trim() !== "");
+
+                if (staticVoters) {
+                    voterData = staticVoters;
+                } else {
+                    voterData = await responses[2].json();
+                }
 
                 voterCount = 0; globalStreetIndex = []; globalVoterIndex = [];
                 Object.keys(voterData).forEach(city => {
@@ -783,17 +802,17 @@
             document.getElementById('panel-form').classList.remove('hidden');
             document.getElementById('f-street-label').innerText = street.toUpperCase();
             document.getElementById('f-house-num').innerText = (hVs[0].house || hVs[0].h) || '---';
-            
+
             // Deduplicate last names
             let uniqueLastNames = {};
             hVs.forEach(v => {
                 let ln = (v.ln || 'VOTER').toUpperCase().trim();
                 uniqueLastNames[ln] = true;
             });
-            let namesHtml = Object.keys(uniqueLastNames).map(ln => 
+            let namesHtml = Object.keys(uniqueLastNames).map(ln =>
                 `<div style="font-weight:900; font-size:1.6rem; color:var(--gold); border-bottom:1px solid rgba(255,255,255,0.05); padding:5px 0;">${ln}</div>`
             ).join('');
-            
+
             document.getElementById('f-voter-info').innerHTML = namesHtml;
             document.getElementById('f-notes').value = '';
             document.getElementById('f-notes').value = '';
@@ -805,7 +824,7 @@
         async function saveCanvass() {
             if (!selectedOutcome) return alert("Outcome Required."); const btn = document.getElementById('save-btn'); btn.innerText = "SAVING...";
             let p = [`OUT: ${selectedOutcome}`];
-            if (checks.supporter) p.push("ID: SUPP"); 
+            if (checks.supporter) p.push("ID: SUPP");
             if (checks.leaning) p.push("ID: LEANING");
             if (checks.scram) p.push("ID: SCRAM");
             const hNum = (currentHVs[0].house || currentHVs[0].h);
