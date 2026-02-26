@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -341,24 +341,20 @@
             margin-right: 5px;
         }
     </style>
-
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('SW registered'))
-                .catch(err => console.log('SW error:', err));
+                navigator.serviceWorker.register('./sw.js');
             });
         }
     </script>
 </head>
 
-
 <body>
-    <div id="strike-banner" class="banner-strike hidden">🚨 STRIKE TEAM: HIGH PRIORITY PRECINCT ACTIVE</div>
+    <div id="strike-banner" class="banner-strike hidden">ðŸš¨ STRIKE TEAM: HIGH PRIORITY PRECINCT ACTIVE</div>
 
     <header>
         <div class="flex-between">
@@ -393,19 +389,19 @@
                 <h2 style="font-weight:900; color: var(--gold); margin-bottom:1.5rem;">STRATEGY DASHBOARD</h2>
                 <div class="dashboard-grid">
                     <div class="dash-card" onclick="showV('view-main'); renderCities();">
-                        <span style="font-size:1.5rem;">🗺️</span>
+                        <span style="font-size:1.5rem;">ðŸ—ºï¸</span>
                         <h3>City Routes</h3>
                     </div>
                     <div class="dash-card" onclick="renderPowerRoutes()">
-                        <span style="font-size:1.5rem;">🎯</span>
+                        <span style="font-size:1.5rem;">ðŸŽ¯</span>
                         <h3>Power Routes</h3>
                     </div>
                     <div class="dash-card" onclick="window.open('maps/District_Maps.pdf')">
-                        <span style="font-size:1.5rem;">📄</span>
+                        <span style="font-size:1.5rem;">ðŸ“„</span>
                         <h3>District Maps</h3>
                     </div>
                     <div class="dash-card" onclick="window.open('data/Coffee_County_Voters_Master.csv')">
-                        <span style="font-size:1.5rem;">📊</span>
+                        <span style="font-size:1.5rem;">ðŸ“Š</span>
                         <h3>Voter Data (CSV)</h3>
                     </div>
                 </div>
@@ -414,7 +410,7 @@
 
                 <button class="btn-gold"
                     style="margin-top:1rem; border-radius: 1rem; background: #1e293b; border: 1px solid #334155; color:var(--text);"
-                    onclick="openSearch()">🔍 SEARCH VOTER OR STREET</button>
+                    onclick="openSearch()">ðŸ” SEARCH VOTER OR STREET</button>
             </div>
         </div>
 
@@ -430,7 +426,7 @@
             </div>
             <div id="panel-form" class="hidden">
                 <button onclick="closeForm()"
-                    style="background:none; border:none; color:var(--gold); margin-bottom:1.5rem; cursor:pointer; font-weight:900; font-size:1.1rem;">←
+                    style="background:none; border:none; color:var(--gold); margin-bottom:1.5rem; cursor:pointer; font-weight:900; font-size:1.1rem;">â†
                     BACK TO LIST</button>
                 <div class="simple-card">
                     <div style="text-align:center;">
@@ -443,20 +439,25 @@
                             <div class="label" style="color:var(--gold);">1. OUTCOME</div>
                             <div class="outcome-grid">
                                 <button class="outcome-btn" onclick="setOutcome('TALKED')">TALKED</button>
+                                <button class="outcome-btn" onclick="setOutcome('LEFT LIT')">LEFT LIT</button>
                                 <button class="outcome-btn" onclick="setOutcome('NOT HOME')">NOT HOME</button>
                                 <button class="outcome-btn" onclick="setOutcome('MOVED')">MOVED</button>
+                                <button class="outcome-btn" onclick="setOutcome('DECEASED')">DECEASED</button>
                                 <button class="outcome-btn" onclick="setOutcome('REFUSED')">REFUSED</button>
                             </div>
                             <div class="label" style="color:var(--gold);">2. SENTIMENT</div>
                             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
                                 <div class="check-toggle" onclick="toggleCheck('supporter')">Supporter <div
-                                        class="check-box" id="chk-supporter">✓</div>
+                                        class="check-box" id="chk-supporter">âœ“</div>
                                 </div>
                                 <div class="check-toggle" onclick="toggleCheck('undecided')">Undecided <div
-                                        class="check-box" id="chk-undecided">✓</div>
+                                        class="check-box" id="chk-undecided">âœ“</div>
+                                </div>
+                                <div class="check-toggle" onclick="toggleCheck('leaning')">Leaning <div
+                                        class="check-box" id="chk-leaning">âœ“</div>
                                 </div>
                                 <div class="check-toggle danger" onclick="toggleCheck('scram')">SCRAM <div
-                                        class="check-box" id="chk-scram">✓</div>
+                                        class="check-box" id="chk-scram">âœ“</div>
                                 </div>
                             </div>
                             <textarea id="f-notes" class="search-input" placeholder="NOTES"
@@ -471,9 +472,9 @@
 
         <div id="view-power" class="hidden">
             <button onclick="goHome()"
-                style="background:none; border:none; color:var(--gold); margin-bottom:1.5rem; cursor:pointer; font-weight:900;">←
+                style="background:none; border:none; color:var(--gold); margin-bottom:1.5rem; cursor:pointer; font-weight:900;">â†
                 BACK</button>
-            <div class="label" style="color:var(--red);">🎯 HIGH-PRIORITY TARGETS</div>
+            <div class="label" style="color:var(--red);">ðŸŽ¯ HIGH-PRIORITY TARGETS</div>
             <div id="power-list"></div>
         </div>
     </div>
@@ -483,7 +484,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <h2 style="font-weight:900; color:var(--gold);">GLOBAL SEARCH</h2>
             <button onclick="closeSearch()"
-                style="background:none; border:none; color:white; font-weight:900; font-size:1.2rem;">✕</button>
+                style="background:none; border:none; color:white; font-weight:900; font-size:1.2rem;">âœ•</button>
         </div>
         <input type="text" id="global-search-input" class="search-input" placeholder="Name, Street, or Precinct..."
             onkeyup="handleGlobalSearch(this.value)">
@@ -504,7 +505,7 @@
             const storedUrl = localStorage.getItem('v6_sync_url');
             if (storedUrl) SYNC_URL = storedUrl;
             else {
-                SYNC_URL = prompt("🛠️ DEV MODE: Please enter your Google Script 'Exec' URL to test locally with live data:");
+                SYNC_URL = prompt("ðŸ› ï¸ DEV MODE: Please enter your Google Script 'Exec' URL to test locally with live data:");
                 if (SYNC_URL) localStorage.setItem('v6_sync_url', SYNC_URL);
             }
         }
@@ -514,7 +515,7 @@
         let cloudResults = {}; let activePriorities = [];
         let currentCity = ''; let currentDist = ''; let currentHVs = null; let currentStreet = '';
         let lastPerspective = 'view-dashboard';
-        let selectedOutcome = null; let checks = { supporter: false, undecided: false, scram: false };
+        let selectedOutcome = null; let checks = { supporter: false, undecided: false, leaning: false, scram: false };
 
         window.addEventListener('load', () => {
             if (volunteerName) {
@@ -579,7 +580,7 @@
             const container = document.getElementById('priority-alerts');
             container.innerHTML = '';
             if (activePriorities.length > 0) {
-                container.innerHTML = '<div class="label" style="color:var(--red);">🚨 ACTIVE STRIKE SECTORS</div>';
+                container.innerHTML = '<div class="label" style="color:var(--red);">ðŸš¨ ACTIVE STRIKE SECTORS</div>';
                 activePriorities.forEach(p => {
                     const el = document.createElement('div'); el.className = 'list-item';
                     el.style.borderColor = 'var(--red)';
@@ -630,7 +631,7 @@
             c.innerHTML = '<div class="label" style="text-align:center;">PRECINCT CITIES</div>';
             Object.keys(voterData).sort().forEach(city => {
                 const i = document.createElement('div'); i.className = 'list-item';
-                i.innerHTML = `<span>${city.toUpperCase()}</span> <span>→</span>`;
+                i.innerHTML = `<span>${city.toUpperCase()}</span> <span>â†’</span>`;
                 i.onclick = () => renderDists(city);
                 c.appendChild(i);
             });
@@ -639,7 +640,7 @@
         function renderDists(city) {
             const c = document.getElementById('district-list'); c.classList.remove('hidden');
             document.getElementById('city-list').classList.add('hidden');
-            c.innerHTML = `<button class="btn-home" onclick="renderCities()">← BACK</button><div class="label">DISTRICTS</div>`;
+            c.innerHTML = `<button class="btn-home" onclick="renderCities()">â† BACK</button><div class="label">DISTRICTS</div>`;
             Object.keys(voterData[city]).sort((a, b) => (parseInt(a) || 0) - (parseInt(b) || 0)).forEach(d => {
                 let total = 0; let done = 0;
                 Object.keys(voterData[city][d] || {}).forEach(s => {
@@ -661,10 +662,10 @@
             const c = document.getElementById('street-list'); c.classList.remove('hidden');
             document.getElementById('district-list').classList.add('hidden');
             document.getElementById('city-list').classList.add('hidden');
-            c.innerHTML = `<button class="btn-home" onclick="renderDists('${city}')">← BACK</button><div class="label">STREETS in Prec. ${dist}</div>`;
+            c.innerHTML = `<button class="btn-home" onclick="renderDists('${city}')">â† BACK</button><div class="label">STREETS in Prec. ${dist}</div>`;
             Object.keys(voterData[city][dist] || {}).sort().forEach(s => {
                 const i = document.createElement('div'); i.className = 'list-item';
-                i.innerHTML = `<span>${s.toUpperCase()}</span> <span>→</span>`;
+                i.innerHTML = `<span>${s.toUpperCase()}</span> <span>â†’</span>`;
                 i.onclick = () => renderHouses(city, dist, s);
                 c.appendChild(i);
             });
@@ -675,7 +676,7 @@
             const c = document.getElementById('house-list');
             document.getElementById('panel-nav').classList.add('hidden');
             document.getElementById('panel-houses').classList.remove('hidden');
-            c.innerHTML = `<button class="btn-home" onclick="renderStreets('${city}','${dist}')">← BACK</button>`;
+            c.innerHTML = `<button class="btn-home" onclick="renderStreets('${city}','${dist}')">â† BACK</button>`;
             const vs = voterData[city][dist][street];
             const hs = {}; vs.forEach(v => {
                 const hNum = v.house || v.h;
@@ -779,7 +780,19 @@
             document.getElementById('panel-form').classList.remove('hidden');
             document.getElementById('f-street-label').innerText = street.toUpperCase();
             document.getElementById('f-house-num').innerText = (hVs[0].house || hVs[0].h) || '---';
-            document.getElementById('f-voter-info').innerHTML = hVs.map(v => `<div style="font-weight:900; font-size:1.6rem; color:var(--gold); border-bottom:1px solid rgba(255,255,255,0.05); padding:5px 0;">${v.ln || 'VOTER'}</div>`).join('');
+            
+            // Deduplicate last names
+            let uniqueLastNames = {};
+            hVs.forEach(v => {
+                let ln = (v.ln || 'VOTER').toUpperCase().trim();
+                uniqueLastNames[ln] = true;
+            });
+            let namesHtml = Object.keys(uniqueLastNames).map(ln => 
+                `<div style="font-weight:900; font-size:1.6rem; color:var(--gold); border-bottom:1px solid rgba(255,255,255,0.05); padding:5px 0;">${ln}</div>`
+            ).join('');
+            
+            document.getElementById('f-voter-info').innerHTML = namesHtml;
+            document.getElementById('f-notes').value = '';
             document.getElementById('f-notes').value = '';
         }
 
@@ -789,7 +802,9 @@
         async function saveCanvass() {
             if (!selectedOutcome) return alert("Outcome Required."); const btn = document.getElementById('save-btn'); btn.innerText = "SAVING...";
             let p = [`OUT: ${selectedOutcome}`];
-            if (checks.supporter) p.push("ID: SUPP"); if (checks.scram) p.push("ID: SCRAM");
+            if (checks.supporter) p.push("ID: SUPP"); 
+            if (checks.leaning) p.push("ID: LEANING");
+            if (checks.scram) p.push("ID: SCRAM");
             const hNum = (currentHVs[0].house || currentHVs[0].h);
             const payload = { volunteerId: volunteerName, results: [{ city: currentCity, district: currentDist, address: `${hNum} ${currentStreet}`, status: p.join(' | '), notes: document.getElementById('f-notes').value.trim() }] };
             await fetch(SYNC_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
