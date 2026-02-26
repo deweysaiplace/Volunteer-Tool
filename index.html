@@ -354,7 +354,7 @@
 </head>
 
 <body>
-    <div id="strike-banner" class="banner-strike hidden">ðŸš¨ STRIKE TEAM: HIGH PRIORITY PRECINCT ACTIVE</div>
+    <div id="strike-banner" class="banner-strike hidden">🚨 STRIKE TEAM: HIGH PRIORITY PRECINCT ACTIVE</div>
 
     <header>
         <div class="flex-between">
@@ -389,19 +389,19 @@
                 <h2 style="font-weight:900; color: var(--gold); margin-bottom:1.5rem;">STRATEGY DASHBOARD</h2>
                 <div class="dashboard-grid">
                     <div class="dash-card" onclick="showV('view-main'); renderCities();">
-                        <span style="font-size:1.5rem;">ðŸ—ºï¸</span>
+                        <span style="font-size:1.5rem;">🗺️</span>
                         <h3>City Routes</h3>
                     </div>
                     <div class="dash-card" onclick="renderPowerRoutes()">
-                        <span style="font-size:1.5rem;">ðŸŽ¯</span>
+                        <span style="font-size:1.5rem;">🎯</span>
                         <h3>Power Routes</h3>
                     </div>
                     <div class="dash-card" onclick="window.open('maps/District_Maps.pdf')">
-                        <span style="font-size:1.5rem;">ðŸ“„</span>
+                        <span style="font-size:1.5rem;">📄</span>
                         <h3>District Maps</h3>
                     </div>
-                    <div class="dash-card" onclick="window.open('data/Coffee_County_Voters_Master.csv')">
-                        <span style="font-size:1.5rem;">ðŸ“Š</span>
+                    <div class="dash-card" onclick="window.open('voter_data.html')">
+                        <span style="font-size:1.5rem;">📊</span>
                         <h3>Voter Data (CSV)</h3>
                     </div>
                 </div>
@@ -410,7 +410,7 @@
 
                 <button class="btn-gold"
                     style="margin-top:1rem; border-radius: 1rem; background: #1e293b; border: 1px solid #334155; color:var(--text);"
-                    onclick="openSearch()">ðŸ” SEARCH VOTER OR STREET</button>
+                    onclick="openSearch()">🔍 SEARCH VOTER OR STREET</button>
             </div>
         </div>
 
@@ -426,7 +426,7 @@
             </div>
             <div id="panel-form" class="hidden">
                 <button onclick="closeForm()"
-                    style="background:none; border:none; color:var(--gold); margin-bottom:1.5rem; cursor:pointer; font-weight:900; font-size:1.1rem;">â†
+                    style="background:none; border:none; color:var(--gold); margin-bottom:1.5rem; cursor:pointer; font-weight:900; font-size:1.1rem;">&#8592;
                     BACK TO LIST</button>
                 <div class="simple-card">
                     <div style="text-align:center;">
@@ -442,22 +442,21 @@
                                 <button class="outcome-btn" onclick="setOutcome('LEFT LIT')">LEFT LIT</button>
                                 <button class="outcome-btn" onclick="setOutcome('NOT HOME')">NOT HOME</button>
                                 <button class="outcome-btn" onclick="setOutcome('MOVED')">MOVED</button>
-                                <button class="outcome-btn" onclick="setOutcome('DECEASED')">DECEASED</button>
                                 <button class="outcome-btn" onclick="setOutcome('REFUSED')">REFUSED</button>
                             </div>
                             <div class="label" style="color:var(--gold);">2. SENTIMENT</div>
                             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
                                 <div class="check-toggle" onclick="toggleCheck('supporter')">Supporter <div
-                                        class="check-box" id="chk-supporter">âœ“</div>
+                                        class="check-box" id="chk-supporter">✓</div>
                                 </div>
                                 <div class="check-toggle" onclick="toggleCheck('undecided')">Undecided <div
-                                        class="check-box" id="chk-undecided">âœ“</div>
+                                        class="check-box" id="chk-undecided">✓</div>
                                 </div>
                                 <div class="check-toggle" onclick="toggleCheck('leaning')">Leaning <div
-                                        class="check-box" id="chk-leaning">âœ“</div>
+                                        class="check-box" id="chk-leaning">✓</div>
                                 </div>
                                 <div class="check-toggle danger" onclick="toggleCheck('scram')">SCRAM <div
-                                        class="check-box" id="chk-scram">âœ“</div>
+                                        class="check-box" id="chk-scram">✓</div>
                                 </div>
                             </div>
                             <textarea id="f-notes" class="search-input" placeholder="NOTES"
@@ -472,9 +471,9 @@
 
         <div id="view-power" class="hidden">
             <button onclick="goHome()"
-                style="background:none; border:none; color:var(--gold); margin-bottom:1.5rem; cursor:pointer; font-weight:900;">â†
+                style="background:none; border:none; color:var(--gold); margin-bottom:1.5rem; cursor:pointer; font-weight:900;">←
                 BACK</button>
-            <div class="label" style="color:var(--red);">ðŸŽ¯ HIGH-PRIORITY TARGETS</div>
+            <div class="label" style="color:var(--red);">🎯 HIGH-PRIORITY TARGETS</div>
             <div id="power-list"></div>
         </div>
     </div>
@@ -484,7 +483,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <h2 style="font-weight:900; color:var(--gold);">GLOBAL SEARCH</h2>
             <button onclick="closeSearch()"
-                style="background:none; border:none; color:white; font-weight:900; font-size:1.2rem;">âœ•</button>
+                style="background:none; border:none; color:white; font-weight:900; font-size:1.2rem;">✕</button>
         </div>
         <input type="text" id="global-search-input" class="search-input" placeholder="Name, Street, or Precinct..."
             onkeyup="handleGlobalSearch(this.value)">
@@ -497,15 +496,15 @@
 
     <script>
         // --- SYNC CONFIG & LOCAL TESTING ---
-        let SYNC_URL = '<?= scriptUrl ?>';
-        const isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || SYNC_URL.startsWith('<?');
+        let SYNC_URL = 'https://script.google.com/macros/s/AKfycby-2Nt4CxNoNyAysZlZvko4VrqDyGaW7L34PLd20gyK-hftXhhJKBTQTr1KsN6949A7kQ/exec';
+        const isLocal = false;
 
         if (isLocal) {
             document.getElementById('dev-tag').classList.remove('hidden');
             const storedUrl = localStorage.getItem('v6_sync_url');
             if (storedUrl) SYNC_URL = storedUrl;
             else {
-                SYNC_URL = prompt("ðŸ› ï¸ DEV MODE: Please enter your Google Script 'Exec' URL to test locally with live data:");
+                SYNC_URL = prompt("🛠️ DEV MODE: Please enter your Google Script 'Exec' URL to test locally with live data:");
                 if (SYNC_URL) localStorage.setItem('v6_sync_url', SYNC_URL);
             }
         }
@@ -580,7 +579,7 @@
             const container = document.getElementById('priority-alerts');
             container.innerHTML = '';
             if (activePriorities.length > 0) {
-                container.innerHTML = '<div class="label" style="color:var(--red);">ðŸš¨ ACTIVE STRIKE SECTORS</div>';
+                container.innerHTML = '<div class="label" style="color:var(--red);">🚨 ACTIVE STRIKE SECTORS</div>';
                 activePriorities.forEach(p => {
                     const el = document.createElement('div'); el.className = 'list-item';
                     el.style.borderColor = 'var(--red)';
@@ -631,16 +630,18 @@
             c.innerHTML = '<div class="label" style="text-align:center;">PRECINCT CITIES</div>';
             Object.keys(voterData).sort().forEach(city => {
                 const i = document.createElement('div'); i.className = 'list-item';
-                i.innerHTML = `<span>${city.toUpperCase()}</span> <span>â†’</span>`;
+                i.innerHTML = `<span>${city.toUpperCase()}</span> <span>&#8594;</span>`;
                 i.onclick = () => renderDists(city);
                 c.appendChild(i);
             });
         }
 
         function renderDists(city) {
+            document.getElementById('panel-nav').classList.remove('hidden');
+            document.getElementById('panel-houses').classList.add('hidden');
             const c = document.getElementById('district-list'); c.classList.remove('hidden');
             document.getElementById('city-list').classList.add('hidden');
-            c.innerHTML = `<button class="btn-home" onclick="renderCities()">â† BACK</button><div class="label">DISTRICTS</div>`;
+            c.innerHTML = `<button class="btn-home" onclick="renderCities()">&#8592; BACK</button><div class="label">DISTRICTS</div>`;
             Object.keys(voterData[city]).sort((a, b) => (parseInt(a) || 0) - (parseInt(b) || 0)).forEach(d => {
                 let total = 0; let done = 0;
                 Object.keys(voterData[city][d] || {}).forEach(s => {
@@ -658,14 +659,16 @@
         function renderStreets(city, dist) {
             showV('view-main');
             currentCity = city; currentDist = dist;
+            document.getElementById('panel-nav').classList.remove('hidden');
+            document.getElementById('panel-houses').classList.add('hidden');
             document.getElementById('strike-banner').classList.toggle('hidden', !activePriorities.includes(dist));
             const c = document.getElementById('street-list'); c.classList.remove('hidden');
             document.getElementById('district-list').classList.add('hidden');
             document.getElementById('city-list').classList.add('hidden');
-            c.innerHTML = `<button class="btn-home" onclick="renderDists('${city}')">â† BACK</button><div class="label">STREETS in Prec. ${dist}</div>`;
+            c.innerHTML = `<button class="btn-home" onclick="renderDists('${city}')">&#8592; BACK</button><div class="label">STREETS in Prec. ${dist}</div>`;
             Object.keys(voterData[city][dist] || {}).sort().forEach(s => {
                 const i = document.createElement('div'); i.className = 'list-item';
-                i.innerHTML = `<span>${s.toUpperCase()}</span> <span>â†’</span>`;
+                i.innerHTML = `<span>${s.toUpperCase()}</span> <span>&#8594;</span>`;
                 i.onclick = () => renderHouses(city, dist, s);
                 c.appendChild(i);
             });
@@ -676,7 +679,7 @@
             const c = document.getElementById('house-list');
             document.getElementById('panel-nav').classList.add('hidden');
             document.getElementById('panel-houses').classList.remove('hidden');
-            c.innerHTML = `<button class="btn-home" onclick="renderStreets('${city}','${dist}')">â† BACK</button>`;
+            c.innerHTML = `<button class="btn-home" onclick="renderStreets('${city}','${dist}')">&#8592; BACK</button>`;
             const vs = voterData[city][dist][street];
             const hs = {}; vs.forEach(v => {
                 const hNum = v.house || v.h;
