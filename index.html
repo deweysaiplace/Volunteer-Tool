@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -113,8 +113,13 @@
         }
 
         @keyframes scroll-text {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(-100%, 0); }
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(-100%, 0);
+            }
         }
 
         .btn-home {
@@ -201,6 +206,39 @@
             width: 0%;
             background: var(--gold);
             transition: width 0.3s;
+        }
+
+        .completion-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.95);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .completion-title {
+            font-size: 2rem;
+            font-weight: 950;
+            color: var(--gold);
+            margin-bottom: 1rem;
+        }
+
+        .next-best-card {
+            background: var(--card);
+            border: 2px solid var(--gold);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px;
+            margin: 2rem 0;
         }
 
         #diagnostics {
@@ -467,9 +505,11 @@
                         <div id="f-questionnaire" style="text-align:left;">
                             <div class="label" style="color:var(--gold);">1. OUTCOME</div>
                             <div class="outcome-grid">
-                                <button class="outcome-btn" onclick="setOutcome('TALKED')">TALKED</button>
-                                <button class="outcome-btn" onclick="setOutcome('LEFT LIT')">LEFT LIT</button>
-                                <button class="outcome-btn" onclick="setOutcome('NOT HOME')">NOT HOME</button>
+                                <button class="outcome-btn" onclick="setOutcome('HAD CONVERSATION')">HAD
+                                    CONVERSATION</button>
+                                <button class="outcome-btn" onclick="setOutcome('LEFT CARD')">LEFT CARD</button>
+                                <button class="outcome-btn" onclick="setOutcome('NO HOME / LEFT CARD')">NO HOME / LEFT
+                                    CARD</button>
                                 <button class="outcome-btn" onclick="setOutcome('MOVED')">MOVED</button>
                                 <button class="outcome-btn" onclick="setOutcome('REFUSED')">REFUSED</button>
                             </div>
@@ -481,10 +521,10 @@
                                 <div class="check-toggle" onclick="toggleCheck('undecided')">Undecided <div
                                         class="check-box" id="chk-undecided">&#10003;</div>
                                 </div>
-                                <div class="check-toggle" onclick="toggleCheck('leaning')">Leaning <div
+                                <div class="check-toggle" onclick="toggleCheck('leaning')">Needs Sign <div
                                         class="check-box" id="chk-leaning">&#10003;</div>
                                 </div>
-                                <div class="check-toggle danger" onclick="toggleCheck('scram')">SCRAM <div
+                                <div class="check-toggle" onclick="toggleCheck('scram')">Wants Call Back <div
                                         class="check-box" id="chk-scram">&#10003;</div>
                                 </div>
                             </div>
@@ -519,6 +559,21 @@
         <div id="search-results" style="margin-top:1.5rem; overflow-y:auto; flex-grow:1;"></div>
     </div>
 
+    <!-- Completion Overlay -->
+    <div id="completion-overlay" class="completion-overlay hidden">
+        <div class="completion-title">STREET COMPLETED! &#127881;</div>
+        <p style="color:var(--muted); font-weight:700;">Amazing work! You've reached 100% on this street.</p>
+        <div class="next-best-card">
+            <div class="label">RECOMMENDED NEXT MOVE</div>
+            <h2 id="next-street-name" style="font-size:1.8rem; margin:0.5rem 0;">STREET NAME</h2>
+            <div id="next-street-details" style="font-size:0.8rem; color:var(--muted);">Precinct XX | High Density</div>
+            <button class="btn-gold" style="margin-top:1.5rem;" onclick="goToNextBest()">GO THERE NOW</button>
+        </div>
+        <button onclick="closeCompletion()"
+            style="background:none; border:none; color:var(--muted); font-weight:800; cursor:pointer;">STAY
+            HERE</button>
+    </div>
+
     <div id="diagnostics">
         <span>VOTERS: <b id="diag-voters" style="color:var(--gold);">...</b></span>
     </div>
@@ -543,7 +598,7 @@
         let cloudResults = {}; let activePriorities = [];
         let currentCity = ''; let currentDist = ''; let currentHVs = null; let currentStreet = '';
         let lastPerspective = 'view-dashboard';
-        let selectedOutcome = null; let checks = { supporter: false, undecided: false, leaning: false, scram: false };
+        let selectedOutcomes = {}; let checks = { supporter: false, undecided: false, leaning: false, scram: false };
 
         window.addEventListener('load', () => {
             if (volunteerName) {
@@ -731,11 +786,27 @@
 
         function renderHouses(city, dist, street) {
             showV('view-main');
+            currentCity = city; currentDist = dist; currentStreet = street;
             const c = document.getElementById('house-list');
             document.getElementById('panel-nav').classList.add('hidden');
             document.getElementById('panel-houses').classList.remove('hidden');
-            c.innerHTML = `<button class="btn-home" onclick="renderStreets('${city}','${dist}')">&#8592; BACK</button>`;
+
+            // Progress Calculation
+            let total = 0; let done = 0;
             const vs = voterData[city][dist][street];
+            vs.forEach(v => { total++; if (cloudResults[(v.house || v.h) + ' ' + street]) done++; });
+            const progress = total === 0 ? 0 : Math.round((done / total) * 100);
+
+            c.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <button class="btn-home" onclick="renderStreets('${city}','${dist}')">&#8592; BACK</button>
+                    <div style="text-align:right;">
+                        <div class="prog-circle" style="font-size:1rem;">${progress}%</div>
+                    </div>
+                </div>
+                <div class="bar-bg" style="margin-bottom:1.5rem;"><div id="street-bar-fill" style="height:100%; width:${progress}%; background:var(--gold); transition:width 0.5s;"></div></div>
+            `;
+
             const hs = {}; vs.forEach(v => {
                 const hNum = v.house || v.h;
                 if (!hs[hNum]) hs[hNum] = []; hs[hNum].push(v);
@@ -832,7 +903,7 @@
         function openForm(hVs, city, dist, street) {
             currentHVs = hVs; currentCity = city; currentDist = dist; currentStreet = street;
             document.querySelectorAll('.outcome-btn, .check-toggle').forEach(b => b.classList.remove('active'));
-            selectedOutcome = null; Object.keys(checks).forEach(k => checks[k] = false);
+            selectedOutcomes = {}; Object.keys(checks).forEach(k => checks[k] = false);
             showV('view-main');
             document.getElementById('panel-houses').classList.add('hidden');
             document.getElementById('panel-form').classList.remove('hidden');
@@ -854,20 +925,91 @@
             document.getElementById('f-notes').value = '';
         }
 
-        function setOutcome(val) { selectedOutcome = val; document.querySelectorAll('.outcome-btn').forEach(b => b.classList.toggle('active', b.innerText === val)); }
+        function setOutcome(val) {
+            selectedOutcomes[val] = !selectedOutcomes[val];
+            document.querySelectorAll('.outcome-btn').forEach(b => {
+                if (b.innerText === val) b.classList.toggle('active', selectedOutcomes[val]);
+            });
+        }
         function toggleCheck(key) { checks[key] = !checks[key]; document.getElementById('chk-' + key).parentElement.classList.toggle('active', checks[key]); }
 
         async function saveCanvass() {
-            if (!selectedOutcome) return alert("Outcome Required."); const btn = document.getElementById('save-btn'); btn.innerText = "SAVING...";
-            let p = [`OUT: ${selectedOutcome}`];
+            const activeOutcomes = Object.keys(selectedOutcomes).filter(k => selectedOutcomes[k]);
+            if (activeOutcomes.length === 0) return alert("Outcome Required.");
+            const btn = document.getElementById('save-btn'); btn.innerText = "SAVING...";
+            let p = activeOutcomes.map(o => `OUT: ${o}`);
             if (checks.supporter) p.push("ID: SUPP");
-            if (checks.leaning) p.push("ID: LEANING");
-            if (checks.scram) p.push("ID: SCRAM");
+            if (checks.leaning) p.push("ID: NEEDS SIGN");
+            if (checks.scram) p.push("ID: WANTS CALL BACK");
             const hNum = (currentHVs[0].house || currentHVs[0].h);
             const payload = { volunteerId: volunteerName, results: [{ city: currentCity, district: currentDist, address: `${hNum} ${currentStreet}`, status: p.join(' | '), notes: document.getElementById('f-notes').value.trim() }] };
             await fetch(SYNC_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
             cloudResults[`${hNum} ${currentStreet}`] = p.join(' | ');
+            checkStreetCompletion();
             closeForm();
+        }
+
+        function checkStreetCompletion() {
+            let total = 0; let done = 0;
+            const vs = voterData[currentCity][currentDist][currentStreet];
+            vs.forEach(v => { total++; if (cloudResults[(v.house || v.h) + ' ' + currentStreet]) done++; });
+
+            if (total > 0 && done === total) {
+                showCompletion();
+            }
+        }
+
+        function showCompletion() {
+            const next = calculateNextBestStreet(currentCity, currentDist, currentStreet);
+            if (!next) return;
+
+            document.getElementById('next-street-name').innerText = next.s.toUpperCase();
+            document.getElementById('next-street-details').innerText = `Precinct ${next.d} | SCORING: ${next.score}`;
+            document.getElementById('completion-overlay').classList.remove('hidden');
+
+            // Store for navigation
+            window.nextBestTarget = next;
+        }
+
+        function calculateNextBestStreet(city, dist, excludeStreet) {
+            let best = null;
+            let bestScore = -1;
+
+            globalStreetIndex.forEach(idx => {
+                if (idx.s === excludeStreet && idx.c === city && idx.d === dist) return;
+
+                // Simple check if already done
+                let total = 0; let done = 0;
+                let score = 0;
+                const vs = voterData[idx.c][idx.d][idx.s];
+                vs.forEach(v => {
+                    total++;
+                    if (cloudResults[(v.house || v.h) + ' ' + idx.s]) done++;
+
+                    // Density Scoring
+                    if (v.Priority === 'Red') score += 5;
+                    else if (v.Priority === 'Pink') score += 3;
+                    else score += 1;
+                });
+
+                if (done < total && score > bestScore) {
+                    bestScore = score;
+                    best = { ...idx, score: score };
+                }
+            });
+            return best;
+        }
+
+        function goToNextBest() {
+            if (window.nextBestTarget) {
+                const n = window.nextBestTarget;
+                closeCompletion();
+                renderHouses(n.c, n.d, n.s);
+            }
+        }
+
+        function closeCompletion() {
+            document.getElementById('completion-overlay').classList.add('hidden');
         }
 
         function closeForm() {
