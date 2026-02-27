@@ -597,6 +597,7 @@
         let voterData = null; let globalStreetIndex = []; let globalVoterIndex = [];
         let volunteerName = localStorage.getItem('v6_user') || '';
         let cloudResults = {}; let activePriorities = [];
+        let pendingSyncQueue = JSON.parse(localStorage.getItem('pending_sync_queue') || '[]');
         let currentCity = ''; let currentDist = ''; let currentHVs = null; let currentStreet = '';
         let lastPerspective = 'view-dashboard';
         let selectedOutcomes = {}; let checks = { supporter: false, undecided: false, leaning: false, scram: false };
@@ -693,12 +694,25 @@
 
                 document.getElementById('diag-voters').innerText = voterCount;
                 document.getElementById('status-pill').innerText = "HUB READY";
+                updateSyncUI();
+                processQueue(); // Process any items left over from previous session
                 if (volunteerName) showV('view-dashboard');
                 renderHomeAlerts();
             } catch (e) {
                 console.error(e);
                 document.getElementById('status-pill').innerText = "OFFLINE";
+                updateSyncUI();
                 if (voterData && volunteerName) showV('view-dashboard');
+            }
+        }
+
+        function updateSyncUI() {
+            const count = pendingSyncQueue.length;
+            const lastSync = document.getElementById('last-sync');
+            if (count > 0) {
+                lastSync.innerHTML = `<span style="color:var(--red); font-weight:bold; cursor:pointer;" onclick="processQueue()">PENDING: ${count} (SYNC NOW)</span>`;
+            } else {
+                lastSync.innerHTML = `SYNC: ${localStorage.getItem('last_success_sync') || '---'}`;
             }
         }
 
