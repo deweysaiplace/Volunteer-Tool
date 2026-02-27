@@ -922,7 +922,6 @@
 
             document.getElementById('f-voter-info').innerHTML = namesHtml;
             document.getElementById('f-notes').value = '';
-            document.getElementById('f-notes').value = '';
         }
 
         function setOutcome(val) {
@@ -945,6 +944,10 @@
             const payload = { volunteerId: volunteerName, results: [{ city: currentCity, district: currentDist, address: `${hNum} ${currentStreet}`, status: p.join(' | '), notes: document.getElementById('f-notes').value.trim() }] };
             await fetch(SYNC_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
             cloudResults[`${hNum} ${currentStreet}`] = p.join(' | ');
+
+            // Refresh the list immediately to show updated status
+            renderHouses(currentCity, currentDist, currentStreet);
+
             checkStreetCompletion();
             closeForm();
         }

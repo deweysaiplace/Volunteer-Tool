@@ -408,6 +408,48 @@
             }
         }
 
+        /* Multi-Select Filters */
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .filter-chip {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .filter-chip:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+        }
+
+        .filter-chip.active {
+            background: var(--accent-green);
+            color: #000;
+            border-color: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .filter-chip.active.e24 {
+            background: #2ecc71;
+        }
+
+        .filter-chip.active.e22 {
+            background: #3498db;
+            color: #fff;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+        }
+
         /* Mobile Responsiveness */
         @media (max-width: 900px) {
             body {
@@ -483,15 +525,11 @@
             <div class="logo">Strategic Route Generator</div>
             <div class="subtitle">Target Area Concentration & Heat Map</div>
         </div>
-        <div style="display: flex; align-items: center;">
-            <span style="color: var(--text-muted); font-size: 0.9rem; margin-right: 15px;">Version: Multi-Election
-                Analysis Mode</span>
-            <select id="dataFilterSelect" onchange="changeFilter()"
-                style="background: var(--surface-color); color: var(--text-light); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 4px; outline: none; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
-                <option value="all">Full Strategic Target List (All Years)</option>
-                <option value="e24">Full 2024 Election Cycle (Primary/Gen)</option>
-                <option value="e22">Full 2022 Election Cycle (Primary/Gen)</option>
-            </select>
+        <div class="filter-group">
+            <span style="color: var(--text-muted); font-size: 0.9rem; margin-right: 5px;">Analyze Concurrently:</span>
+            <div id="filterChipAll" class="filter-chip active" onclick="toggleFilter('all')">Full History</div>
+            <div id="filterChip24" class="filter-chip e24" onclick="toggleFilter('e24')">2024 Cycle</div>
+            <div id="filterChip22" class="filter-chip e22" onclick="toggleFilter('e22')">2022 Cycle</div>
         </div>
     </header>
 
@@ -593,17 +631,32 @@
 
         let currentDistrict = null;
         let currentStreet = null;
-        let currentFilter = 'all'; // 'all' or 'last'
+        let activeFilters = new Set(['all']);
 
         function init() {
             renderDistricts();
         }
 
-        function changeFilter() {
-            currentFilter = document.getElementById('dataFilterSelect').value;
+        function toggleFilter(filterKey) {
+            if (filterKey === 'all') {
+                activeFilters = new Set(['all']);
+            } else {
+                activeFilters.delete('all');
+                if (activeFilters.has(filterKey)) {
+                    activeFilters.delete(filterKey);
+                } else {
+                    activeFilters.add(filterKey);
+                }
+                if (activeFilters.size === 0) activeFilters.add('all');
+            }
+
+            // Update UI
+            document.getElementById('filterChipAll').classList.toggle('active', activeFilters.has('all'));
+            document.getElementById('filterChip24').classList.toggle('active', activeFilters.has('e24'));
+            document.getElementById('filterChip22').classList.toggle('active', activeFilters.has('e22'));
+
             renderDistricts();
             if (currentDistrict) {
-                // Find and click the active district button to refres stats
                 const activeBtn = Array.from(document.querySelectorAll('.district-btn')).find(b => b.innerText.includes(currentDistrict));
                 selectDistrict(currentDistrict, activeBtn);
             }
@@ -611,11 +664,13 @@
 
         function getFilteredStreets(dist) {
             const rawStreets = ROUTE_DATA[dist] || [];
-            if (currentFilter === 'all') return rawStreets;
+            if (activeFilters.has('all')) return rawStreets;
 
-            // Filter by specific election cycle flags
+            // Filter voters by ANY selected election cycle
             return rawStreets.map(s => {
-                const filteredVoters = s.voters.filter(v => v[currentFilter] === 1);
+                const filteredVoters = s.voters.filter(v => {
+                    return Array.from(activeFilters).some(f => v[f] === 1);
+                });
                 const h = filteredVoters.filter(v => v.p === 'Y').length;
                 const m = filteredVoters.filter(v => v.p === 'P').length;
                 return {
@@ -625,7 +680,7 @@
                     m: m,
                     t: h + m
                 };
-            }).filter(s => s.t > 0); // Only show streets that still have targets
+            }).filter(s => s.t > 0);
         }
 
         function renderDistricts() {
