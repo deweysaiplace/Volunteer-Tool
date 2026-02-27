@@ -1035,12 +1035,22 @@
                     pill.innerText = "SYNCING...";
                     pill.className = "status-pill status-syncing";
 
-                    await fetch(SYNC_URL, {
+                    const response = await fetch(SYNC_URL, {
                         method: 'POST',
-                        mode: 'no-cors',
+                        // Removing 'no-cors' fixes the iOS Safari bug that drops POST bodies on 302 redirects
+                        // By defaulting to standard cors with a text/plain body, it's a "simple request"
+                        headers: {
+                            'Content-Type': 'text/plain;charset=utf-8'
+                        },
                         cache: 'no-cache',
                         body: JSON.stringify(entry)
                     });
+
+                    // With standard CORS, we can actually read the response!
+                    const result = await response.json();
+                    if (result.result !== "success") {
+                        throw new Error("Server returned error: " + (result.error || "Unknown"));
+                    }
 
                     // Cleanup on success
                     pendingSyncQueue.shift();
