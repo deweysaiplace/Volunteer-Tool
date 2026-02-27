@@ -976,60 +976,88 @@
         async function saveCanvass() {
             const activeOutcomes = Object.keys(selectedOutcomes).filter(k => selectedOutcomes[k]);
             if (activeOutcomes.length === 0) return alert("Outcome Required.");
+
             const btn = document.getElementById('save-btn');
             const oldText = btn.innerText;
             btn.innerText = "SAVING..."; btn.disabled = true;
+
+            const hNum = (currentHVs[0].house || currentHVs[0].h);
+            const addressKey = `${hNum} ${currentStreet}`;
 
             let p = activeOutcomes.map(o => `OUT: ${o}`);
             if (checks.supporter) p.push("ID: SUPP");
             if (checks.leaning) p.push("ID: NEEDS SIGN");
             if (checks.scram) p.push("ID: WANTS CALL BACK");
-            const hNum = (currentHVs[0].house || currentHVs[0].h);
             const statusStr = p.join(' | ');
-            const addressKey = `${hNum} ${currentStreet}`;
 
-            // Update local state immediately
+            // 1. LOCAL PERSISTENT RECORD
             cloudResults[addressKey] = statusStr;
             localStorage.setItem('v6_cloud_results', JSON.stringify(cloudResults));
 
-            const payload = {
+            // 2. QUEUE FOR SYNC
+            const entry = {
                 volunteerId: volunteerName,
                 results: [{
                     city: currentCity,
                     district: currentDist,
                     address: addressKey,
                     status: statusStr,
-                    notes: document.getElementById('f-notes').value.trim()
+                    notes: document.getElementById('f-notes').value.trim(),
+                    timestamp: new Date().toISOString()
                 }]
             };
+            pendingSyncQueue.push(entry);
+            localStorage.setItem('pending_sync_queue', JSON.stringify(pendingSyncQueue));
 
-            try {
-                // Await fetch to ensure we know if it succeeded
-                await fetch(SYNC_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    cache: 'no-cache',
-                    body: JSON.stringify(payload)
-                });
+            // 3. UI REFRESH
+            renderHouses(currentCity, currentDist, currentStreet);
+            updateSyncUI();
 
-                // Update Sync Indicator
-                document.getElementById('last-sync').innerText = "SYNC: " + new Date().toLocaleTimeString();
+            // 4. ATTEMPT PROCESSING
+            await processQueue();
 
-                // Refresh UI
-                renderHouses(currentCity, currentDist, currentStreet);
-                checkStreetCompletion();
-                closeForm();
-            } catch (e) {
-                console.error("Critical Sync Error:", e);
-                alert("SYNC FAILED! Data saved locally, but not to spreadsheet. Check connection.");
+            closeForm();
+            btn.innerText = oldText;
+            btn.disabled = false;
+        }
 
-                // Still refresh local UI so user sees progress
-                renderHouses(currentCity, currentDist, currentStreet);
-                closeForm();
-            } finally {
-                btn.innerText = oldText;
-                btn.disabled = false;
+        let isProcessing = false;
+        async function processQueue() {
+            if (isProcessing || pendingSyncQueue.length === 0) return;
+            isProcessing = true;
+
+            const pill = document.getElementById('status-pill');
+            const originalPillText = pill.innerText;
+
+            while (pendingSyncQueue.length > 0) {
+                const entry = pendingSyncQueue[0];
+                try {
+                    pill.innerText = "SYNCING...";
+                    pill.className = "status-pill status-syncing";
+
+                    await fetch(SYNC_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        cache: 'no-cache',
+                        body: JSON.stringify(entry)
+                    });
+
+                    // Cleanup on success
+                    pendingSyncQueue.shift();
+                    localStorage.setItem('pending_sync_queue', JSON.stringify(pendingSyncQueue));
+
+                    const time = new Date().toLocaleTimeString();
+                    localStorage.setItem('last_success_sync', time);
+                } catch (e) {
+                    console.error("Failsafe Sync Error:", e);
+                    break;
+                }
             }
+
+            updateSyncUI();
+            pill.innerText = "HUB READY";
+            pill.className = "status-pill status-ready";
+            isProcessing = false;
         }
 
         function checkStreetCompletion() {
