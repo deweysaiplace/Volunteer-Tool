@@ -615,7 +615,15 @@
             }
             document.getElementById('status-pill').innerText = "SYNCING...";
             try {
-                // Try to load static voter data first (faster/more reliable on GitHub)
+                // Load local results first for immediate responsiveness
+                const localResults = localStorage.getItem('v6_cloud_results');
+                if (localResults) {
+                    try {
+                        cloudResults = JSON.parse(localResults);
+                    } catch (e) { console.error("Local results parse failed"); }
+                }
+
+                // Try to load static voter data first
                 let staticVoters = null;
                 try {
                     const staticRes = await fetch('voter_data.json');
@@ -627,14 +635,16 @@
                     fetch(SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'action=get_priorities')
                 ];
 
-                // Only fetch voters from Google if static load failed
                 if (!staticVoters) {
                     fetchPromises.push(fetch(SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'action=get_voters'));
                 }
 
                 const responses = await Promise.all(fetchPromises);
+
+                // Process Results
                 const resultsArr = await responses[0].json();
                 resultsArr.forEach(r => cloudResults[r.Address] = r.status);
+                localStorage.setItem('v6_cloud_results', JSON.stringify(cloudResults));
 
                 const pData = await responses[1].json();
                 activePriorities = (pData.active || []).filter(x => x.trim() !== "");
@@ -646,21 +656,23 @@
                     document.getElementById('marquee-box').classList.add('hidden');
                 }
 
-                if (staticVoters) {
-                    voterData = staticVoters;
-                } else {
-                    voterData = await responses[2].json();
-                }
+                voterData = staticVoters || await responses[2].json();
 
+                // ASYNC CHUNKED PROCESSING
                 voterCount = 0; globalStreetIndex = []; globalVoterIndex = [];
-                Object.keys(voterData).forEach(city => {
-                    Object.keys(voterData[city] || {}).forEach(dist => {
-                        Object.keys(voterData[city][dist] || {}).forEach(street => {
+                const cities = Object.keys(voterData);
+
+                for (const city of cities) {
+                    const dists = Object.keys(voterData[city] || {});
+                    for (const dist of dists) {
+                        const streets = Object.keys(voterData[city][dist] || {});
+                        for (const street of streets) {
                             if (Array.isArray(voterData[city][dist][street])) {
                                 voterCount += voterData[city][dist][street].length;
                                 globalStreetIndex.push({ s: street, c: city, d: dist });
+
+                                // Process voters in this street
                                 voterData[city][dist][street].forEach(v => {
-                                    // Index for searching: First Last, Last, and Street Address
                                     const fullName = ((v.fn || '') + ' ' + (v.ln || '')).trim();
                                     globalVoterIndex.push({
                                         name: fullName,
@@ -672,9 +684,12 @@
                                     });
                                 });
                             }
-                        });
-                    });
-                });
+                        }
+                    }
+                    // Yield to browser UI thread after each city
+                    await new Promise(r => setTimeout(r, 0));
+                }
+
                 document.getElementById('diag-voters').innerText = voterCount;
                 document.getElementById('status-pill').innerText = "HUB READY";
                 if (volunteerName) showV('view-dashboard');
@@ -682,6 +697,7 @@
             } catch (e) {
                 console.error(e);
                 document.getElementById('status-pill').innerText = "OFFLINE";
+                if (voterData && volunteerName) showV('view-dashboard');
             }
         }
 
@@ -726,16 +742,21 @@
 
         function goHome() {
             showV('view-dashboard'); document.getElementById('strike-banner').classList.add('hidden');
-            document.getElementById('panel-nav').classList.remove('hidden');
-            document.getElementById('panel-houses').classList.add('hidden');
-            document.getElementById('panel-form').classList.add('hidden');
+            showPanel('panel-nav');
             document.getElementById('city-list').classList.remove('hidden');
             document.getElementById('district-list').classList.add('hidden');
             document.getElementById('street-list').classList.add('hidden');
         }
 
+        function showPanel(id) {
+            document.getElementById('panel-nav').classList.toggle('hidden', id !== 'panel-nav');
+            document.getElementById('panel-houses').classList.toggle('hidden', id !== 'panel-houses');
+            document.getElementById('panel-form').classList.toggle('hidden', id !== 'panel-form');
+        }
+
         function renderCities() {
             showV('view-main');
+            showPanel('panel-nav');
             const c = document.getElementById('city-list'); c.classList.remove('hidden');
             c.innerHTML = '<div class="label" style="text-align:center;">PRECINCT CITIES</div>';
             Object.keys(voterData).sort().forEach(city => {
@@ -747,8 +768,7 @@
         }
 
         function renderDists(city) {
-            document.getElementById('panel-nav').classList.remove('hidden');
-            document.getElementById('panel-houses').classList.add('hidden');
+            showPanel('panel-nav');
             const c = document.getElementById('district-list'); c.classList.remove('hidden');
             document.getElementById('city-list').classList.add('hidden');
             c.innerHTML = `<button class="btn-home" onclick="renderCities()">&#8592; BACK</button><div class="label">DISTRICTS</div>`;
@@ -769,16 +789,22 @@
         function renderStreets(city, dist) {
             showV('view-main');
             currentCity = city; currentDist = dist;
-            document.getElementById('panel-nav').classList.remove('hidden');
-            document.getElementById('panel-houses').classList.add('hidden');
+            showPanel('panel-nav');
             document.getElementById('strike-banner').classList.toggle('hidden', !activePriorities.includes(dist));
             const c = document.getElementById('street-list'); c.classList.remove('hidden');
             document.getElementById('district-list').classList.add('hidden');
             document.getElementById('city-list').classList.add('hidden');
             c.innerHTML = `<button class="btn-home" onclick="renderDists('${city}')">&#8592; BACK</button><div class="label">STREETS in Prec. ${dist}</div>`;
+
             Object.keys(voterData[city][dist] || {}).sort().forEach(s => {
+                // Calculate progress for this street
+                let total = 0; let done = 0;
+                const vs = voterData[city][dist][s];
+                vs.forEach(v => { total++; if (cloudResults[(v.house || v.h) + ' ' + s]) done++; });
+                const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+
                 const i = document.createElement('div'); i.className = 'list-item';
-                i.innerHTML = `<span>${s.toUpperCase()}</span> <span>&#8594;</span>`;
+                i.innerHTML = `<span>${s.toUpperCase()}</span> <span class="prog-circle" style="font-size:0.7rem; width:28px; height:28px;">${pct}%</span>`;
                 i.onclick = () => renderHouses(city, dist, s);
                 c.appendChild(i);
             });
@@ -788,8 +814,7 @@
             showV('view-main');
             currentCity = city; currentDist = dist; currentStreet = street;
             const c = document.getElementById('house-list');
-            document.getElementById('panel-nav').classList.add('hidden');
-            document.getElementById('panel-houses').classList.remove('hidden');
+            showPanel('panel-houses');
 
             // Progress Calculation
             let total = 0; let done = 0;
@@ -871,7 +896,8 @@
                 res.innerHTML += '<div class="label" style="text-align:center;">STREETS & PRECINCTS</div>';
                 sMatches.forEach(m => {
                     const el = document.createElement('div'); el.className = 'list-item';
-                    el.innerHTML = `<div><div style="font-weight:900;">${m.s.toUpperCase()}</div><div style="font-size:0.6rem;">${m.c} | Prec. ${m.d}</div></div>`;
+                    el.style.padding = '1.5rem'; // Increased hit area
+                    el.innerHTML = `<div style="width:100%"><div style="font-weight:900;">${m.s.toUpperCase()}</div><div style="font-size:0.6rem;">${m.c} | Prec. ${m.d}</div></div>`;
                     el.onclick = () => { closeSearch(); renderHouses(m.c, m.d, m.s); };
                     res.appendChild(el);
                 });
@@ -883,8 +909,9 @@
                 res.innerHTML += '<div class="label" style="text-align:center; margin-top:1.5rem;">VOTERS</div>';
                 vMatches.forEach(m => {
                     const el = document.createElement('div'); el.className = 'list-item';
+                    el.style.padding = '1.5rem'; // Increased hit area
                     const hNum = m.house;
-                    el.innerHTML = `<div><div style="font-weight:900;">${m.name.toUpperCase()}</div><div style="font-size:0.6rem;">${hNum} ${m.street} | Prec. ${m.dist}</div></div>`;
+                    el.innerHTML = `<div style="width:100%"><div style="font-weight:900;">${m.name.toUpperCase()}</div><div style="font-size:0.6rem;">${hNum} ${m.street} | Prec. ${m.dist}</div></div>`;
                     el.onclick = () => {
                         closeSearch();
                         // Find all voters in this house
@@ -905,8 +932,7 @@
             document.querySelectorAll('.outcome-btn, .check-toggle').forEach(b => b.classList.remove('active'));
             selectedOutcomes = {}; Object.keys(checks).forEach(k => checks[k] = false);
             showV('view-main');
-            document.getElementById('panel-houses').classList.add('hidden');
-            document.getElementById('panel-form').classList.remove('hidden');
+            showPanel('panel-form');
             document.getElementById('f-street-label').innerText = street.toUpperCase();
             document.getElementById('f-house-num').innerText = (hVs[0].house || hVs[0].h) || '---';
 
@@ -935,21 +961,49 @@
         async function saveCanvass() {
             const activeOutcomes = Object.keys(selectedOutcomes).filter(k => selectedOutcomes[k]);
             if (activeOutcomes.length === 0) return alert("Outcome Required.");
-            const btn = document.getElementById('save-btn'); btn.innerText = "SAVING...";
+            const btn = document.getElementById('save-btn');
+            const oldText = btn.innerText;
+            btn.innerText = "SAVING..."; btn.disabled = true;
+
             let p = activeOutcomes.map(o => `OUT: ${o}`);
             if (checks.supporter) p.push("ID: SUPP");
             if (checks.leaning) p.push("ID: NEEDS SIGN");
             if (checks.scram) p.push("ID: WANTS CALL BACK");
             const hNum = (currentHVs[0].house || currentHVs[0].h);
-            const payload = { volunteerId: volunteerName, results: [{ city: currentCity, district: currentDist, address: `${hNum} ${currentStreet}`, status: p.join(' | '), notes: document.getElementById('f-notes').value.trim() }] };
-            await fetch(SYNC_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            cloudResults[`${hNum} ${currentStreet}`] = p.join(' | ');
+            const statusStr = p.join(' | ');
+            const addressKey = `${hNum} ${currentStreet}`;
 
-            // Refresh the list immediately to show updated status
-            renderHouses(currentCity, currentDist, currentStreet);
+            // Update local state immediately
+            cloudResults[addressKey] = statusStr;
+            localStorage.setItem('v6_cloud_results', JSON.stringify(cloudResults));
 
-            checkStreetCompletion();
-            closeForm();
+            const payload = {
+                volunteerId: volunteerName,
+                results: [{
+                    city: currentCity,
+                    district: currentDist,
+                    address: addressKey,
+                    status: statusStr,
+                    notes: document.getElementById('f-notes').value.trim()
+                }]
+            };
+
+            try {
+                // Background sync
+                fetch(SYNC_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
+                    .catch(e => console.error("Sync failed, but result is saved locally", e));
+
+                // Refresh UI
+                renderHouses(currentCity, currentDist, currentStreet);
+                checkStreetCompletion();
+                closeForm();
+            } catch (e) {
+                console.error(e);
+                alert("Error during save process.");
+            } finally {
+                btn.innerText = oldText;
+                btn.disabled = false;
+            }
         }
 
         function checkStreetCompletion() {
@@ -1017,7 +1071,7 @@
 
         function closeForm() {
             if (lastPerspective === 'view-power') renderPowerRoutes();
-            else { showV('view-main'); document.getElementById('panel-houses').classList.remove('hidden'); document.getElementById('panel-form').classList.add('hidden'); }
+            else { showV('view-main'); showPanel('panel-houses'); }
             document.getElementById('save-btn').innerText = "SAVE RESULTS";
         }
     </script>
