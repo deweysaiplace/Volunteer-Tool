@@ -990,17 +990,28 @@
             };
 
             try {
-                // Background sync
-                fetch(SYNC_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
-                    .catch(e => console.error("Sync failed, but result is saved locally", e));
+                // Await fetch to ensure we know if it succeeded
+                await fetch(SYNC_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    cache: 'no-cache',
+                    body: JSON.stringify(payload)
+                });
+
+                // Update Sync Indicator
+                document.getElementById('last-sync').innerText = "SYNC: " + new Date().toLocaleTimeString();
 
                 // Refresh UI
                 renderHouses(currentCity, currentDist, currentStreet);
                 checkStreetCompletion();
                 closeForm();
             } catch (e) {
-                console.error(e);
-                alert("Error during save process.");
+                console.error("Critical Sync Error:", e);
+                alert("SYNC FAILED! Data saved locally, but not to spreadsheet. Check connection.");
+
+                // Still refresh local UI so user sees progress
+                renderHouses(currentCity, currentDist, currentStreet);
+                closeForm();
             } finally {
                 btn.innerText = oldText;
                 btn.disabled = false;
