@@ -405,16 +405,6 @@
             margin-right: 5px;
         }
     </style>
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js');
-            });
-        }
-    </script>
 </head>
 
 <body>
@@ -580,19 +570,10 @@
     </div>
 
     <script>
-        // --- SYNC CONFIG & LOCAL TESTING ---
+        // --- SYNC CONFIG ---
         let SYNC_URL = 'https://script.google.com/macros/s/AKfycbxoA5M-s1zxXSSpD45diFCZurjDMlSpY_2rEo_IwksUTkf7ZUN6uFnMfARIPdZZCz7C/exec';
         const isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost';
-
-        if (isLocal) {
-            document.getElementById('dev-tag').classList.remove('hidden');
-            const storedUrl = localStorage.getItem('v6_sync_url');
-            if (storedUrl) SYNC_URL = storedUrl;
-            else {
-                SYNC_URL = prompt("🛠️ DEV MODE: Please enter your Google Script 'Exec' URL to test locally with live data:");
-                if (SYNC_URL) localStorage.setItem('v6_sync_url', SYNC_URL);
-            }
-        }
+        if (isLocal) { document.getElementById('dev-tag').classList.remove('hidden'); }
 
         let voterData = null; let globalStreetIndex = []; let globalVoterIndex = [];
         let volunteerName = localStorage.getItem('v6_user') || '';
@@ -628,37 +609,56 @@
                 // Try to load static voter data first
                 let staticVoters = null;
                 try {
-                    const staticRes = await fetch('voter_data.json');
+                    const staticRes = await fetch('voter_data_full.json');
                     if (staticRes.ok) staticVoters = await staticRes.json();
                 } catch (e) { console.warn("Static data load skipped"); }
 
                 const fetchPromises = [
-                    fetch(SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'action=fetch'),
-                    fetch(SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'action=get_priorities')
+                    fetch(SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'action=fetch').catch(e => null),
+                    fetch(SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'action=get_priorities').catch(e => null)
                 ];
 
                 if (!staticVoters) {
-                    fetchPromises.push(fetch(SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'action=get_voters'));
+                    fetchPromises.push(fetch(SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'action=get_voters').catch(e => null));
                 }
 
                 const responses = await Promise.all(fetchPromises);
 
                 // Process Results
-                const resultsArr = await responses[0].json();
-                resultsArr.forEach(r => cloudResults[r.Address] = r.status);
-                localStorage.setItem('v6_cloud_results', JSON.stringify(cloudResults));
-
-                const pData = await responses[1].json();
-                activePriorities = (pData.active || []).filter(x => x.trim() !== "");
-
-                if (pData.broadcast) {
-                    document.getElementById('marquee-box').classList.remove('hidden');
-                    document.getElementById('marquee-text').innerText = "COMMAND BROADCAST: " + pData.broadcast;
-                } else {
-                    document.getElementById('marquee-box').classList.add('hidden');
+                if (responses[0] && responses[0].ok) {
+                    try {
+                        const resultsArr = await responses[0].json();
+                        resultsArr.forEach(r => cloudResults[r.Address] = (r.Response || r.status || r.Status || r.response || ''));
+                        localStorage.setItem('v6_cloud_results', JSON.stringify(cloudResults));
+                    } catch (e) { console.error("Error parsing fetch results", e); }
                 }
 
-                voterData = staticVoters || await responses[2].json();
+                if (responses[1] && responses[1].ok) {
+                    try {
+                        const pData = await responses[1].json();
+                        activePriorities = (pData.active || []).filter(x => x.trim() !== "");
+
+                        if (pData.broadcast) {
+                            document.getElementById('marquee-box').classList.remove('hidden');
+                            document.getElementById('marquee-text').innerText = "COMMAND BROADCAST: " + pData.broadcast;
+                        } else {
+                            document.getElementById('marquee-box').classList.add('hidden');
+                        }
+                    } catch (e) { console.error("Error parsing priorities", e); }
+                }
+
+                let vRaw = staticVoters;
+                if (!staticVoters && responses[2] && responses[2].ok) {
+                    try {
+                        vRaw = await responses[2].json();
+                    } catch (e) { console.error("Error parsing get_voters results. Endpoint may have returned HTML instead of JSON.", e); }
+                }
+
+                if (vRaw) {
+                    voterData = vRaw.hierarchy || vRaw;
+                } else {
+                    voterData = {}; // fallback to prevent crashes
+                }
 
                 // ASYNC CHUNKED PROCESSING
                 voterCount = 0; globalStreetIndex = []; globalVoterIndex = [];
