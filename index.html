@@ -1028,6 +1028,9 @@
             closeForm();
             btn.innerText = oldText;
             btn.disabled = false;
+
+            // Trigger completion logic if the street hit 100%
+            setTimeout(checkStreetCompletion, 300); // Slight delay for animation to finish
         }
 
         let isProcessing = false;
