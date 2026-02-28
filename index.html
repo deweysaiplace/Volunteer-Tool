@@ -630,7 +630,14 @@
                 if (responses[0] && responses[0].ok) {
                     try {
                         const resultsArr = await responses[0].json();
+                        cloudResults = {}; // Wipe local tracking data and rebuild from server truth
                         resultsArr.forEach(r => cloudResults[r.Address] = (r.Response || r.status || r.Status || r.response || ''));
+
+                        // Re-apply offline pending queue so local work isn't visually wiped before it syncs
+                        pendingSyncQueue.forEach(entry => {
+                            if (entry.results) entry.results.forEach(r => cloudResults[r.address] = r.status);
+                        });
+
                         localStorage.setItem('v6_cloud_results', JSON.stringify(cloudResults));
                     } catch (e) { console.error("Error parsing fetch results", e); }
                 }
